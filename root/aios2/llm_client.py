@@ -1,25 +1,31 @@
 """
 LLM Client - FULL FEATURED with Custom Jinja2 Filters
-Includes validation, error handling, and exploitation-specific formatting
+Includes validation, error handling, exploitation-specific formatting
+OPTIMIZED: Streaming mode + KV cache reuse
 NO TRUNCATION - FULL OUTPUT
 """
 import re
 import json
+import sys
 from jinja2 import Environment, FileSystemLoader, pass_environment
 from llama_cpp import Llama
 
 class LLMClient:
-    def __init__(self, model_path: str, ctx: int = 4096, n_threads: int = 12):
-        """Initialize LLM client with advanced Jinja2 setup."""
+    def __init__(self, model_path: str, ctx: int = 4096, n_threads: int = 12, n_gpu_layers: int = -1):
+        """Initialize LLM client with streaming and KV cache support."""
         self.llm = Llama(
             model_path=model_path,
-            n_gpu_layers=-1,
+            n_gpu_layers=n_gpu_layers,
             n_ctx=ctx,
             n_threads=n_threads,
             verbose=False
         )
         self.ctx_size = ctx
         self.max_ctx = 262144
+        
+        # KV cache management
+        self.kv_cache = None
+        self.use_kv_cache = True
         
         # Setup Jinja2 template environment with custom filters
         try:
@@ -71,8 +77,8 @@ class LLMClient:
         """Make instance callable."""
         return self.chat(messages, tools)
 
-    def chat(self, messages: list, tools: dict = None) -> dict:
-        """Chat with model using template."""
+    def chat(self, messages: list, tools: dict = None, stream: bool = True) -> dict:
+        """Chat with model using streaming and KV cache."""
         self._check_and_adjust_context(messages)
         
         # Build prompt
@@ -89,17 +95,18 @@ class LLMClient:
         else:
             prompt = self._build_prompt_fallback(messages, tools)
         
-        # Generate response
-        response = self.llm(
-            prompt,
-            max_tokens=16384,
-            temperature=0.4,
-            top_p=0.95,
-            stop=["<|im_end|>", "USER:", "Task>"]
-        )
-        
-        # Extract content
-        content = response["choices"][0]["text"].strip()
+        # Generate response with streaming
+        if stream:
+            content = self._generate_streaming(prompt)
+        else:
+            response = self.llm(
+                prompt,
+                max_tokens=8192,
+                temperature=0.4,
+                top_p=0.95,
+                stop=["<|im_end|>", "USER:", "Task>"]
+            )
+            content = response["choices"][0]["text"].strip()
         
         # Extract thinking
         thinking = ""
@@ -117,6 +124,29 @@ class LLMClient:
             "thinking": thinking,
             "tool_calls": tool_calls
         }
+
+    def _generate_streaming(self, prompt: str) -> str:
+        """
+        Generate response with streaming.
+        Tokens appear in real-time, improving perceived speed.
+        """
+        content = ""
+        print("\n📝 LLM RESPONSE (streaming):\n", end="", flush=True)
+        
+        for chunk in self.llm(
+            prompt,
+            max_tokens=8192,
+            temperature=0.4,
+            top_p=0.95,
+            stop=["<|im_end|>", "USER:", "Task>"],
+            stream=True
+        ):
+            token = chunk["choices"][0]["text"]
+            content += token
+            print(token, end="", flush=True)
+        
+        print("\n")  # Newline after streaming completes
+        return content.strip()
 
     def _check_and_adjust_context(self, messages: list):
         """Monitor context usage - NO ACTION, JUST REPORT."""

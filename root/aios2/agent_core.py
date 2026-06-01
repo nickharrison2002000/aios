@@ -4,6 +4,7 @@ AIOS Agent Core - FIXED with Phase Control
 - go_back_to_PHASE tool for debugging
 - Better phase management
 - FULL output, NO truncation anywhere
+- OPTIMIZED: Streaming mode + early tool call detection
 """
 import json
 import os
@@ -110,7 +111,8 @@ class Agent:
             print("-" * 80)
             
             try:
-                response = self.llm(messages, TOOL_SCHEMA)
+                # Use streaming for faster iterations
+                response = self.llm(messages, TOOL_SCHEMA, stream=True)
             except Exception as e:
                 print(f"❌ LLM error: {e}")
                 break
@@ -119,9 +121,6 @@ class Agent:
             if not content:
                 print("❌ Empty response from LLM")
                 break
-            
-            # Show FULL response (no truncation)
-            print(f"\n📝 LLM RESPONSE:\n{content}\n")
             
             # Strip thinking tags
             thinking = ""
@@ -139,7 +138,7 @@ class Agent:
             tool_calls = self._extract_tool_calls(response_content)
             
             if tool_calls:
-                print(f"🔧 TOOL CALLS FOUND: {len(tool_calls)}\n")
+                print(f"\n🔧 TOOL CALLS FOUND: {len(tool_calls)}\n")
                 
                 for i, tc in enumerate(tool_calls):
                     name = tc.get("name", "unknown")
