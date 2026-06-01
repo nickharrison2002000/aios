@@ -1,13 +1,14 @@
 """
-Tool definitions for AIOS agent - CORRECTED
+Tool definitions for AIOS agent
 Includes go_back_to_phase tool for phase management
+NO TRUNCATION - FULL OUTPUT FOR ALL RESULTS
 """
 import subprocess
 import os
 import json
 
 def execute_bash(command: str, cwd: str = "/root") -> str:
-    """Execute bash command with full output capture."""
+    """Execute bash command with full output capture - NO TRUNCATION."""
     try:
         result = subprocess.run(
             command,
@@ -25,13 +26,13 @@ def execute_bash(command: str, cwd: str = "/root") -> str:
         return f"ERROR executing command: {str(e)}"
 
 def read_file(path: str) -> str:
-    """Read and return file contents."""
+    """Read and return complete file contents - NO TRUNCATION."""
     try:
         if not os.path.isfile(path):
             return f"ERROR: File not found: {path}"
         with open(path, 'r', errors='ignore') as f:
             content = f.read()
-        return content  # NO TRUNCATION
+        return content
     except Exception as e:
         return f"ERROR reading file: {str(e)}"
 
@@ -62,7 +63,7 @@ def edit_file(path: str, old_string: str, new_string: str) -> str:
         return f"ERROR editing file: {str(e)}"
 
 def list_directory(directory: str) -> str:
-    """List directory contents with file/directory indicators."""
+    """List directory contents with file/directory indicators - NO TRUNCATION."""
     try:
         if not os.path.isdir(directory):
             return f"ERROR: Directory not found: {directory}"
@@ -81,7 +82,7 @@ def list_directory(directory: str) -> str:
         return f"ERROR listing directory: {str(e)}"
 
 def search_files(directory: str, pattern: str) -> str:
-    """Search for pattern in files recursively."""
+    """Search for pattern in files recursively - NO TRUNCATION."""
     try:
         if not os.path.isdir(directory):
             return f"ERROR: Directory not found: {directory}"
@@ -96,14 +97,8 @@ def search_files(directory: str, pattern: str) -> str:
                             if pattern.lower() in line.lower():
                                 results.append(f"{filepath}:{line_num}: {line.strip()}")
                                 matches_found += 1
-                                if matches_found >= 100:
-                                    break
                 except:
                     pass
-                if matches_found >= 100:
-                    break
-            if matches_found >= 100:
-                break
         if results:
             return '\n'.join(results) + f"\n\n(Found {matches_found} matches)"
         else:
@@ -112,7 +107,7 @@ def search_files(directory: str, pattern: str) -> str:
         return f"ERROR searching files: {str(e)}"
 
 def web_request(url: str, method: str = "GET") -> str:
-    """Make HTTP request and return response content."""
+    """Make HTTP request and return response content - NO TRUNCATION."""
     try:
         import urllib.request
         import urllib.error
@@ -120,7 +115,7 @@ def web_request(url: str, method: str = "GET") -> str:
         req.add_header('User-Agent', 'AIOS-Agent/1.0')
         response = urllib.request.urlopen(req, timeout=30)
         content = response.read().decode('utf-8', errors='ignore')
-        return content  # NO TRUNCATION
+        return content
     except Exception as e:
         return f"ERROR making web request: {str(e)}"
 
@@ -168,7 +163,7 @@ TOOL_MAP = {
     "mark_done": mark_done,
 }
 
-# Tool schema for LLM - CORRECTED WITH EXACT PARAMETER NAMES
+# Tool schema for LLM - EXACT PARAMETER NAMES
 TOOL_SCHEMA = {
     "execute_bash": {
         "description": "Execute bash command on system",

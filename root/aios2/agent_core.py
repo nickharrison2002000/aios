@@ -3,7 +3,7 @@ AIOS Agent Core - FIXED with Phase Control
 - Proper tool extraction from JSON
 - go_back_to_PHASE tool for debugging
 - Better phase management
-- Full output, no truncation
+- FULL output, NO truncation anywhere
 """
 import json
 import os
@@ -150,7 +150,8 @@ class Agent:
                     
                     result = self._execute_tool(name, args)
                     
-                    print(f"  Result: {result[:200]}{'...' if len(result) > 200 else ''}\n")
+                    # FULL RESULT - NO TRUNCATION
+                    print(f"  Result: {result}\n")
                     
                     messages.append({
                         "role": "tool",
@@ -160,14 +161,12 @@ class Agent:
                     
                     self.tool_call_count += 1
                 
-                # Window messages
-                if len(messages) > 22:
-                    messages = [messages[0]] + messages[-20:]
+                # NO MESSAGE WINDOWING - KEEP FULL CONTEXT
             else:
                 print("⚠️ NO TOOLS FOUND - Pushing LLM to act\n")
                 messages.append({
                     "role": "user",
-                    "content": "You MUST call a tool now. Choose from the 8 tools available."
+                    "content": "You MUST call a tool now. Choose from the 10 tools available and format as <tool_call>{...}</tool_call>. Required tools: list_directory, read_file, write_file, edit_file, search_files, execute_bash, advance_phase, go_back_to_phase, web_request, mark_done"
                 })
             
             # Check for task completion

@@ -1,6 +1,7 @@
 """
 LLM Client - FULL FEATURED with Custom Jinja2 Filters
 Includes validation, error handling, and exploitation-specific formatting
+NO TRUNCATION - FULL OUTPUT
 """
 import re
 import json
@@ -30,7 +31,6 @@ class LLMClient:
             
             # Add custom filters
             template_env.filters['validate_json'] = self._filter_validate_json
-            template_env.filters['truncate_safe'] = self._filter_truncate_safe
             template_env.filters['format_tool_call'] = self._filter_format_tool_call
             template_env.filters['safe_string'] = self._filter_safe_string
             
@@ -56,14 +56,6 @@ class LLMClient:
             return json.loads(json.dumps(obj))
         except:
             return {}
-
-    def _filter_truncate_safe(self, text: str, length: int = 2500) -> str:
-        """Safely truncate text with indicator."""
-        if not isinstance(text, str):
-            text = str(text)
-        if len(text) > length:
-            return text[:length] + "..."
-        return text
 
     def _filter_format_tool_call(self, name: str, args: dict) -> str:
         """Format tool call for display."""
@@ -127,7 +119,7 @@ class LLMClient:
         }
 
     def _check_and_adjust_context(self, messages: list):
-        """Monitor context usage."""
+        """Monitor context usage - NO ACTION, JUST REPORT."""
         total_chars = sum(len(m.get("content", "")) for m in messages)
         estimated_tokens = int(total_chars / 4) + 500
         usage_percent = (estimated_tokens / self.ctx_size) * 100
