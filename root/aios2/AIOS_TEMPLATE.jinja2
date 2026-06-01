@@ -1,0 +1,32 @@
+{%- set enable_thinking = true %}
+{%- for message in messages %}
+{%- if message.role == "system" %}
+<|im_start|>system
+{{ message.content | safe_string }}
+<|im_end|>
+{%- elif message.role == "user" %}
+<|im_start|>user
+{{ message.content | safe_string }}
+<|im_end|>
+{%- elif message.role == "assistant" %}
+<|im_start|>assistant
+{{ message.content }}
+<|im_end|>
+{%- elif message.role == "tool" %}
+<|im_start|>user
+Tool response ({{ message.name }}):
+{{ message.content | safe_string }}
+<|im_end|>
+{%- endif %}
+{%- endfor %}
+<|im_start|>assistant
+{%- if enable_thinking %}
+<think>
+I am an autonomous KVM exploitation agent. I need to:
+1. Use tools to accomplish the current phase objective
+2. Make tool calls in <tool_call> JSON blocks
+3. Progress through phases: research → fuzz → vuln_analysis → exploit → iterate → verify
+4. Extract flags or achieve remote code execution as proof of exploitation
+</think>
+
+{%- endif %}
