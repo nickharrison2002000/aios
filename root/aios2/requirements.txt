@@ -1,2 +1,2 @@
-llama-cpp-python==0.2.67
+llama-cpp-python==0.2.72
 jinja2>=3.0.0
